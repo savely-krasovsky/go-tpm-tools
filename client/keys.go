@@ -391,11 +391,12 @@ func (k *Key) Unseal(in *pb.SealedBytes, opts UnsealOpts) ([]byte, error) {
 		var paramErr tpm2.ParameterError
 		if errors.As(certErr, &paramErr) && paramErr.Code == tpm2.RCInsufficient {
 			var signer *Key
-			if k.pubArea.Type == tpm2.AlgECC {
+			switch k.pubArea.Type {
+			case tpm2.AlgECC:
 				signer, err = AttestationKeyECC(k.rw)
-			} else if k.pubArea.Type == tpm2.AlgRSA {
+			case tpm2.AlgRSA:
 				signer, err = AttestationKeyRSA(k.rw)
-			} else {
+			default:
 				// We have a check above, but who know how code will change in future
 				return nil, fmt.Errorf("unexpected key of type: %v", k.pubArea.Type)
 			}
