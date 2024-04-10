@@ -1,4 +1,4 @@
-module github.com/savely-krasovsky/go-tpm-tools
+module github.com/google/go-tpm-tools
 
 go 1.20
 
