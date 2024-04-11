@@ -385,11 +385,21 @@ func (k *Key) Unseal(in *pb.SealedBytes, opts UnsealOpts) ([]byte, error) {
 		// being allowed by all versions of the TPM spec). To work around
 		// this bug, we use a temporary signing key and ignore the signed
 		// result. To reduce the cost of this workaround, we use a cached
-		// ECC signing key.
+		// ECC or RSA signing key.
 		// We can detect this bug, as it triggers a RCInsufficient
 		// Unmarshaling error.
-		if paramErr, ok := certErr.(tpm2.ParameterError); ok && paramErr.Code == tpm2.RCInsufficient {
-			signer, err := AttestationKeyECC(k.rw)
+		var handleError tpm2.HandleError
+		if errors.As(certErr, &handleError) && handleError.Code == tpm2.RCInsufficient {
+			var signer *Key
+			switch k.pubArea.Type {
+			case tpm2.AlgECC:
+				signer, err = AttestationKeyECC(k.rw)
+			case tpm2.AlgRSA:
+				signer, err = AttestationKeyRSA(k.rw)
+			default:
+				// We have a check above, but who know how code will change in future
+				return nil, fmt.Errorf("unexpected key of type: %v", k.pubArea.Type)
+			}
 			if err != nil {
 				return nil, fmt.Errorf("failed to create fallback signing key: %w", err)
 			}
