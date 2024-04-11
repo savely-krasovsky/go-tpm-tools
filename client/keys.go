@@ -388,8 +388,8 @@ func (k *Key) Unseal(in *pb.SealedBytes, opts UnsealOpts) ([]byte, error) {
 		// ECC or RSA signing key.
 		// We can detect this bug, as it triggers a RCInsufficient
 		// Unmarshaling error.
-		var paramErr tpm2.ParameterError
-		if errors.As(certErr, &paramErr) && paramErr.Code == tpm2.RCInsufficient {
+		var handleError tpm2.HandleError
+		if errors.As(certErr, &handleError) && handleError.Code == tpm2.RCInsufficient {
 			var signer *Key
 			switch k.pubArea.Type {
 			case tpm2.AlgECC:
